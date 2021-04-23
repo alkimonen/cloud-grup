@@ -50,6 +50,28 @@ public class EntryController {
         }
     }
 
+    @RequestMapping(value = "/entry/new", method = RequestMethod.POST)
+    public String savePost(@RequestBody String url) {
+        Entry entry = new Entry();
+        entry.setId(randomID());
+        entry.setUrl(url);
+        String key = random();
+        while (!getURL(key).equals(""))
+            key = random();
+
+        entry.setKey(key);
+        Date date = new Date();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.MONTH, 1);
+        entry.setExpirationDate(cal);
+
+        if ( entryService.save(entry) != null)
+            return "Success";
+        else
+            return "Failed";
+    }
+
     @RequestMapping({"entry/new/{url}", "entry/new/{url}/{key}"})
     public String save(@PathVariable String url, @PathVariable(required = false) String key){
         Entry entry = new Entry();
