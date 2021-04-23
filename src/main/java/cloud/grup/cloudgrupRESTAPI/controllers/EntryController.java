@@ -121,9 +121,8 @@ public class EntryController {
     @RequestMapping(value = "/{key}", method = RequestMethod.GET)
     public void redirect(HttpServletResponse httpServletResponse , @PathVariable String key) throws IOException {
         String original = getURL( key);
-        System.out.println(original);
-        original = "https://" + original;
-        System.out.println(original);
+        if (original.length() > 5 && !original.substring(0,5).equals("https"))
+            original = "https://" + original;
         httpServletResponse.sendRedirect(original);
     }
 
