@@ -67,7 +67,7 @@ public class EntryController {
         entry.setExpirationDate(cal);
 
         if ( entryService.save(entry) != null)
-            return "Success";
+            return "cloud-grup.herokuapp.com/" + key;
         else
             return "Failed";
     }
@@ -95,7 +95,7 @@ public class EntryController {
         System.out.println(entry.toString1());
 
         if ( entryService.save(entry) != null)
-            return "Success";
+            return "cloud-grup.herokuapp.com/" + key;
         else
             return "Failed";
     }
