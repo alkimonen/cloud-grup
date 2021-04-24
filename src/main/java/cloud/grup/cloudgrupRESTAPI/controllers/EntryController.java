@@ -33,51 +33,19 @@ public class EntryController {
         this.entryService = entryService;
     }
 
-    /*
-    @RequestMapping("entry/delete/{id}")
-    public void delete(@PathVariable Long id){
-        if ( getURLbyID(id)) {
-            entryService.delete(Long.valueOf(id));
-        }
-    }*/
-
-    @RequestMapping("entry/deleteExpiredKeys")
-    public void deleteExpiredKeys(){
-        ArrayList<Long> expiredKeys = getExpiredKeys();
-        for ( int i = 0; i < expiredKeys.size(); ++i) {
-            System.out.println( "Deleting id " + expiredKeys.get(i));
-            entryService.delete(expiredKeys.get(i));
-        }
-    }
-
-    @RequestMapping(value = "/entry/new", method = RequestMethod.POST)
-    public String savePost(@RequestBody String url) {
+    @RequestMapping(value = {"/entry", "/entry/{key}", "/entry/{key}/{burl}"})//, method = RequestMethod.POST)
+    public String newEntry(@PathVariable(required = false) String key, @PathVariable(required = false) String burl, @RequestBody(required = false) String url) {
         Entry entry = new Entry();
-        entry.setId(randomID());
-        entry.setUrl(url);
-        String key = random();
-        while (!getURL(key).equals(""))
-            key = random();
 
-        entry.setKey(key);
-        Date date = new Date();
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.add(Calendar.MONTH, 1);
-        entry.setExpirationDate(cal);
-
-        if ( entryService.save(entry) != null)
-            return "cloud-grup.herokuapp.com/" + key;
+        if (key != null && burl != null) {
+            entry.setUrl(burl);
+        }
+        else if ( url != null)
+            entry.setUrl(url);
         else
-            return "Failed";
-    }
+            return "Url needed";
 
-    @RequestMapping({"entry/new/{url}", "entry/new/{url}/{key}"})
-    public String save(@PathVariable String url, @PathVariable(required = false) String key){
-        Entry entry = new Entry();
-        entry.setId(randomID());
-        entry.setUrl(url);
-        if(key == null || key.length() != 6) {
+        if (key == null || key.length() != 6) {
             key = random();
             while (!getURL(key).equals(""))
                 key = random();
@@ -87,35 +55,63 @@ public class EntryController {
                 return "Key already in use";
         }
         entry.setKey(key);
-        Date date = new Date();
+
+        entry.initExpirationDate();
+        /*
         Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.add(Calendar.MONTH, 1);
-        entry.setExpirationDate(cal);
-        System.out.println(entry.toString1());
+        cal.setTime(new Date());
+        cal.add(Calendar.MONTH, -1);
+        entry.setExpirationDate(cal);*/
+
+        entry.initAccessRate();
 
         if ( entryService.save(entry) != null)
             return "cloud-grup.herokuapp.com/" + key;
         else
-            return "Failed";
+            return "Task failed";
+    }
+
+    @GetMapping("/entry/info/{key}")
+    public String entryAnalytics(@PathVariable String key)  throws IOException {
+        Entry e = getEntry( key);
+        if ( e == null)
+            return "Entry not found";
+        return "cloud-grup.herokuapp.com/" + e.getKey() + " | " + e.getUrl()
+                + " | " + e.getExpirationDate().getTime() + " | Accessed " + e.getAccessRate() + " times.";
+    }
+
+    @RequestMapping("/entry/deleteExpiredKeys")
+    public String deleteExpiredKeys(){
+        String deleted = "| Expiration Date:             | Key    | Original URL\n";
+
+        Calendar today = Calendar.getInstance();
+        today.setTime(new Date());
+
+        List<Entry> all = entryService.listAll();
+        for(int i = 0 ; i < all.size() ; i++) {
+            Calendar expDate = all.get(i).getExpirationDate();
+            if ( expDate.compareTo(today) < 0) {
+                entryService.delete(all.get(i).getId());
+                deleted += "| " + all.get(i).getExpirationDate().getTime();
+                deleted += " | " + all.get(i).getKey();
+                deleted += " | " + all.get(i).getUrl();
+                deleted += " | Accessed " + all.get(i).getAccessRate() + " times.\n";
+            }
+        }
+        return deleted;
     }
 
     private Long randomID() {
-        return Long.valueOf((int)Math.random()*100000);
+        return Long.valueOf((int)Math.random()*10000);
     }
-
-    /*
-    @RequestMapping(value="entry/{key}", method = RequestMethod.GET)
-    public ModelAndView method(@PathVariable("key") String url) {
-        System.out.println("DENEME YONLENDIRME");
-        String original = "www.google.com";
-        return new ModelAndView("redirect:" + original);
-    }
-    */
 
     @GetMapping("/deneme")
-    public String deneme(){
-        return "DENEME CHECK";
+    public String rolled(HttpServletResponse httpServletResponse)  throws IOException {
+        try {
+            httpServletResponse.sendRedirect("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        }
+        catch (IOException e) {};
+        return "Never gonna give you up\n";
     }
 
     @RequestMapping(value = "/{key}", method = RequestMethod.GET)
@@ -123,7 +119,12 @@ public class EntryController {
         String original = getURL( key);
         if (original.length() > 5 && !original.substring(0,5).equals("https"))
             original = "https://" + original;
-        httpServletResponse.sendRedirect(original);
+        try {
+            httpServletResponse.sendRedirect(original);
+        }
+        catch (IOException e) {
+            return;
+        };
     }
 
     private String random() {
@@ -141,15 +142,22 @@ public class EntryController {
         return ret;
     }
 
-    private String getURL( String key) {List<Entry> all = entryService.listAll();
-        String original = "";
+    private Entry getEntry( String key) {
+        List<Entry> all = entryService.listAll();
         for(int i = 0 ; i < all.size() ; i++){
             if(all.get(i).getKey().equals(key)){
-                original = all.get(i).getUrl();
-                break;
+                return all.get(i);
             }
         }
-        return original;
+        return null;
+    }
+
+    private String getURL( String key) {
+        Entry e = getEntry( key);
+        if ( e != null)
+            return e.getUrl();
+        else
+            return "";
     }
     private boolean getURLbyID( Long id) {
         List<Entry> all = entryService.listAll();
@@ -178,3 +186,4 @@ public class EntryController {
     }
 
 }
+

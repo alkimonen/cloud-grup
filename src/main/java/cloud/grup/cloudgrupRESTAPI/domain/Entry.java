@@ -2,6 +2,7 @@ package cloud.grup.cloudgrupRESTAPI.domain;
 
 import javax.persistence.*;
 import java.util.Calendar;
+import java.util.Date;
 
 @Entity
 @Table(name = "entry")
@@ -16,6 +17,8 @@ public class Entry {
     private String key;
     @Column(name = "expiration_date", nullable = false)
     private Calendar expiration_date;
+    @Column(name = "access_rate", nullable = false)
+    private int access_rate;
 
     public Long getId() {
         return _id;
@@ -49,7 +52,27 @@ public class Entry {
         this.expiration_date = expirationDate;
     }
 
+    public void initExpirationDate() {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        cal.add(Calendar.MONTH, 1);
+        this.expiration_date = cal;
+    }
+
+    public int getAccessRate() {
+        return this.access_rate;
+    }
+
+    public void initAccessRate() {
+        this.access_rate = 0;
+    }
+
+    public void accessed() {
+        ++access_rate;
+    }
+
     public String toString1() {
         return this.getId()+" "+this.getUrl()+" "+this.getKey();
     }
 }
+
