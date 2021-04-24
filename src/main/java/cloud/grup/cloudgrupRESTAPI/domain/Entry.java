@@ -37,6 +37,7 @@ public class Entry {
     }
 
     public String getKey() {
+        accessed();
         return key;
     }
 

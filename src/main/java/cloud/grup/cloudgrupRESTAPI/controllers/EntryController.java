@@ -154,8 +154,10 @@ public class EntryController {
 
     private String getURL( String key) {
         Entry e = getEntry( key);
-        if ( e != null)
+        if ( e != null) {
+            entryService.save(e);
             return e.getUrl();
+        }
         else
             return "";
     }
