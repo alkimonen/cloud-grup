@@ -61,11 +61,11 @@ public class Entry {
     }
 
     public int getAccessRate() {
-        return this.access_rate;
+        return this.access_rate - 2;
     }
 
     public void initAccessRate() {
-        this.access_rate = -2;
+        this.access_rate = 0;
     }
 
     public void accessed() {
