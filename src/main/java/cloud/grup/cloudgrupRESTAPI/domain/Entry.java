@@ -65,7 +65,7 @@ public class Entry {
     }
 
     public void initAccessRate() {
-        this.access_rate = 0;
+        this.access_rate = -2;
     }
 
     public void accessed() {
