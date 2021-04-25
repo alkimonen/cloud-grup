@@ -51,8 +51,9 @@ public class EntryController {
                 key = random();
         }
         else {
-            if ( !getURL(key).equals(""))
-                return "Key already in use";
+            while ( !getURL(key).equals("")) {
+                key = random();
+            }
         }
         entry.setKey(key);
 
@@ -188,4 +189,3 @@ public class EntryController {
     }
 
 }
-
